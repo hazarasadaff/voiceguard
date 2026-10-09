@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VoiceGuard | AI Voice Security</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0b1020;
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        header {
+            padding: 30px 0;
+            border-bottom: 1px solid #27304a;
+        }
+
+        header h1 {
+            font-size: 32px;
+            color: #5ee7ff;
+        }
+
+        header p {
+            margin-top: 8px;
+            color: #aab4cc;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
+
+        .hero h2 {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .hero p {
+            color: #aab4cc;
+            font-size: 17px;
+        }
+
+        .card {
+            background: #141b2d;
+            border: 1px solid #293653;
+            border-radius: 18px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 700px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .upload-area {
+            border: 2px dashed #405070;
+            border-radius: 14px;
+            padding: 35px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin-top: 15px;
+            color: #cbd5e1;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #1da1f2;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1688cf;
+        }
+
+        button:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #5ee7ff;
+        }
+
+        #result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 14px;
+            background: #0f1628;
+            border: 1px solid #34415f;
+        }
+
+        .result-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #27304a;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #9ca8c0;
+        }
+
+        .value {
+            font-weight: bold;
+        }
+
+        .risk-low {
+            color: #4ade80;
+        }
+
+        .risk-medium {
+            color: #facc15;
+        }
+
+        .risk-high {
+            color: #f87171;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #68748d;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>🛡️ VoiceGuard</h1>
+        <p>AI-Powered Real-Time Voice Cloning Detection</p>
+    </header>
+
+    <section class="hero">
+        <h2>Detect Synthetic Voices</h2>
+        <p>
+            Upload an audio file and let the AI model analyze
+            whether the voice appears genuine or synthetic.
+        </p>
+    </section>
+
+    <section class="card">
+
+        <h3>🎙️ Voice Analysis</h3>
+
+        <div class="upload-area">
+
+            <p>Select an audio file for analysis</p>
+
+            <input
+                    type="file"
+                    id="audioFile"
+                    accept="audio/*"
+            >
+
+        </div>
+
+        <button
+                id="analyzeButton"
+                onclick="analyzeVoice()">
+            Analyze Voice
+        </button>
+
+        <div id="loading">
+            🤖 AI is analyzing the voice...
+        </div>
+
+        <div id="result">
+
+            <div class="result-title">
+                Analysis Result
+            </div>
+
+            <div class="result-row">
+                <span class="label">File</span>
+                <span class="value" id="fileName"></span>
+            </div>
+
+            <div class="result-row">
+                <span class="label">Detection</span>
+                <span class="value" id="detectionResult"></span>
+            </div>
+
+            <div class="result-row">
+                <span class="label">Confidence</span>
+                <span class="value" id="confidence"></span>
+            </div>
+
+            <div class="result-row">
+                <span class="label">Risk Level</span>
+                <span class="value" id="riskLevel"></span>
+            </div>
+
+        </div>
+
+    </section>
+
+    <footer>
+        VoiceGuard © 2026 | AI Voice Security Research Project
+    </footer>
+
+</div>
+
+<script>
+
+    async function analyzeVoice() {
+
+        const fileInput =
+            document.getElementById("audioFile");
+
+        const analyzeButton =
+            document.getElementById("analyzeButton");
+
+        const loading =
+            document.getElementById("loading");
+
+        const result =
+            document.getElementById("result");
+
+        if (fileInput.files.length === 0) {
+
+            alert("Please select an audio file first.");
+
+            return;
+        }
+
+        const file =
+            fileInput.files[0];
+
+        const formData =
+            new FormData();
+
+        formData.append("file", file);
+
+        analyzeButton.disabled = true;
+
+        loading.style.display = "block";
+
+        result.style.display = "none";
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/voice-analysis/upload",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Server returned an error."
+                );
+            }
+
+            const data =
+                await response.json();
+
+            document.getElementById("fileName")
+                .textContent =
+                data.fileName;
+
+            document.getElementById("detectionResult")
+                .textContent =
+                data.result;
+
+            document.getElementById("confidence")
+                .textContent =
+                (data.confidence * 100).toFixed(2) + "%";
+
+            const riskElement =
+                document.getElementById("riskLevel");
+
+            riskElement.textContent =
+                data.riskLevel;
+
+            riskElement.className = "value";
+
+            if (data.riskLevel === "LOW") {
+
+                riskElement.classList.add(
+                    "risk-low"
+                );
+
+            } else if (data.riskLevel === "MEDIUM") {
+
+                riskElement.classList.add(
+                    "risk-medium"
+                );
+
+            } else if (data.riskLevel === "HIGH") {
+
+                riskElement.classList.add(
+                    "risk-high"
+                );
+            }
+
+            result.style.display = "block";
+
+        } catch (error) {
+
+            alert(
+                "Voice analysis failed: "
+                + error.message
+            );
+
+        } finally {
+
+            analyzeButton.disabled = false;
+
+            loading.style.display = "none";
+        }
+    }
+
+</script>
+
+</body>
+</html>
