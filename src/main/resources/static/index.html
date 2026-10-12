@@ -1,10 +1,10 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceGuard | Live Voice Security</title>
+    <title>VoiceGuard | AI Voice Detection</title>
 
     <style>
         * {
@@ -14,59 +14,68 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #0b1220;
-            color: #f1f5f9;
+            background: #0b1120;
+            color: #e5e7eb;
         }
 
         header {
-            text-align: center;
-            padding: 28px 16px;
-            background: #111c31;
-            border-bottom: 1px solid #263550;
+            padding: 22px 8%;
+            border-bottom: 1px solid #263247;
+            background: #111a2e;
         }
 
         header h1 {
-            margin: 0 0 8px;
+            margin: 0;
             color: #67e8f9;
         }
 
         header p {
-            margin: 0;
-            color: #b7c4d8;
+            color: #9ca3af;
+            margin-bottom: 0;
         }
 
         main {
-            max-width: 850px;
-            margin: 28px auto;
-            padding: 0 16px 40px;
+            max-width: 950px;
+            margin: 35px auto;
+            padding: 0 20px;
         }
 
         .card {
-            background: #111c31;
-            border: 1px solid #293954;
+            background: #151f33;
+            border: 1px solid #2b3951;
             border-radius: 14px;
-            padding: 22px;
-            margin-bottom: 20px;
+            padding: 24px;
+            margin-bottom: 22px;
         }
 
         h2 {
             margin-top: 0;
-            font-size: 21px;
+            color: #f9fafb;
         }
 
-        .description {
-            color: #b7c4d8;
+        p {
             line-height: 1.6;
+            color: #bdc7d8;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            margin: 18px 0;
+            padding: 12px;
+            background: #0b1120;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #e5e7eb;
         }
 
         button {
             border: 0;
             border-radius: 8px;
             padding: 12px 18px;
-            font-size: 15px;
+            margin: 5px 5px 5px 0;
             font-weight: bold;
             cursor: pointer;
-            margin: 6px 5px 6px 0;
         }
 
         button:disabled {
@@ -74,319 +83,270 @@
             cursor: not-allowed;
         }
 
-        .start {
-            background: #06b6d4;
-            color: #06202b;
-        }
-
-        .stop {
-            background: #ef4444;
+        .primary {
+            background: #0891b2;
             color: white;
         }
 
-        .analyze {
-            background: #818cf8;
-            color: #101432;
+        .secondary {
+            background: #334155;
+            color: white;
         }
 
-        input[type="file"] {
-            width: 100%;
-            margin: 12px 0;
-            color: #dbeafe;
+        .danger {
+            background: #b91c1c;
+            color: white;
         }
 
         #status {
-            margin-top: 15px;
+            margin-top: 18px;
             padding: 12px;
-            background: #0b1220;
             border-radius: 8px;
-            color: #bae6fd;
-            line-height: 1.5;
+            background: #0b1120;
+            color: #67e8f9;
             overflow-wrap: anywhere;
         }
 
-        #result {
-            display: none;
+        .result {
+            margin-top: 15px;
+            padding: 18px;
+            background: #0b1120;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow-wrap: anywhere;
         }
 
-        .result-value {
-            font-size: 21px;
+        .result p {
+            margin: 8px 0;
+        }
+
+        .label {
+            color: #67e8f9;
             font-weight: bold;
-            overflow-wrap: anywhere;
-        }
-
-        .genuine {
-            color: #4ade80;
-        }
-
-        .synthetic {
-            color: #f87171;
-        }
-
-        .uncertain {
-            color: #fbbf24;
-        }
-
-        .warning {
-            background: #451a1a;
-            border: 1px solid #ef4444;
-            color: #fecaca;
-            padding: 14px;
-            border-radius: 8px;
-            margin-top: 12px;
-            line-height: 1.5;
         }
 
         .small {
+            color: #9ca3af;
             font-size: 13px;
-            color: #9fb0c8;
-            line-height: 1.6;
         }
 
-        .live-indicator {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            background: #24334b;
-            color: #cbd5e1;
-            font-size: 13px;
-            margin-bottom: 12px;
-        }
-
-        .live-indicator.active {
-            background: #14532d;
-            color: #bbf7d0;
-        }
-
-        .stats {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .stat {
-            background: #0b1220;
-            padding: 12px;
-            border-radius: 8px;
-            flex: 1;
-            min-width: 130px;
-        }
-
-        .stat strong {
-            display: block;
-            margin-top: 6px;
-            font-size: 19px;
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #9ca3af;
         }
     </style>
 </head>
 
 <body>
-
 <header>
-    <h1>🛡️ VoiceGuard</h1>
-    <p>AI-Powered Voice Cloning Detection</p>
+    <h1>VoiceGuard</h1>
+    <p>AI-powered voice authenticity analysis</p>
 </header>
 
 <main>
-
     <section class="card">
-        <h2>🎤 Live Voice Monitoring</h2>
-
-        <p class="description">
-            Start monitoring to capture microphone audio automatically.
-            VoiceGuard analyzes consecutive 3-second audio chunks using
-            the existing AI model.
-        </p>
-
-        <div id="liveIndicator" class="live-indicator">
-            ● Monitoring stopped
-        </div>
-
-        <div>
-            <button id="startButton" class="start">
-                ▶ Start Monitoring
-            </button>
-
-            <button id="stopButton" class="stop" disabled>
-                ■ Stop Monitoring
-            </button>
-        </div>
-
-        <div class="stats">
-            <div class="stat">
-                Audio chunks analyzed
-                <strong id="chunkCount">0</strong>
-            </div>
-
-            <div class="stat">
-                Monitoring duration
-                <strong id="duration">00:00</strong>
-            </div>
-        </div>
-
-        <div id="status" role="status" aria-live="polite">
-            Ready. Click Start Monitoring and allow microphone access.
-        </div>
-
-        <p class="small">
-            Keep speaking naturally. Each analysis takes a few seconds or
-            longer depending on your computer. Very short speech or silence
-            may produce unreliable results.
-        </p>
-    </section>
-
-    <section id="result" class="card">
-        <h2>🔎 Latest AI Analysis</h2>
-
-        <p>Detection result</p>
-        <div id="detection" class="result-value">Waiting...</div>
-
-        <p>Model confidence</p>
-        <div id="confidence" class="result-value">—</div>
-
-        <p>Risk level</p>
-        <div id="risk" class="result-value">—</div>
-
-        <p>Audio analyzed</p>
-        <div id="fileName">—</div>
-
-        <div id="warning"></div>
-        <p id="analysisTime" class="small"></p>
-    </section>
-
-    <section class="card">
-        <h2>📁 Test with an Audio File</h2>
-
-        <p class="description">
-            Keep this option for testing recorded genuine or synthetic
-            voice samples.
+        <h2>Analyze an Audio File</h2>
+        <p>
+            Upload an audio recording to analyze it using the VoiceGuard
+            backend and its configured AI model.
         </p>
 
         <form id="uploadForm">
             <input
                     type="file"
                     id="audioFile"
-                    accept="audio/*,.mpeg,.mp3,.wav,.ogg,.oga,.opus,.m4a"
+                    accept="audio/*,.wav,.mp3,.webm,.m4a,.ogg"
                     required
             >
-
-            <button type="submit" class="analyze" id="uploadButton">
-                Analyze Audio File
+            <button type="submit" class="primary" id="uploadButton">
+                Analyze Audio
             </button>
         </form>
     </section>
 
     <section class="card">
-        <h2>ℹ️ Important information</h2>
-        <p class="small">
-            VoiceGuard provides an AI-based estimate, not proof that a voice
-            is genuine or cloned. Do not make financial or safety decisions
-            based on this result alone. Microphone audio is sent to your
-            configured Java backend for analysis. Obtain appropriate consent
-            before monitoring other people.
+        <h2>Live Microphone Monitoring</h2>
+        <p>
+            Allow microphone access. VoiceGuard will capture audio in
+            3-second chunks and submit each chunk for analysis.
         </p>
+
+        <button id="startButton" class="primary">
+            Start Monitoring
+        </button>
+
+        <button id="stopButton" class="danger" disabled>
+            Stop Monitoring
+        </button>
+
         <p class="small">
-            This prototype monitors microphone input; it does not directly
-            capture both sides of a phone call. Use a supported call-audio
-            integration for that functionality.
+            Live monitoring requires microphone permission and a secure
+            browser context, such as localhost.
         </p>
     </section>
 
+    <section class="card">
+        <h2>Analysis Results</h2>
+        <div id="status" role="status" aria-live="polite">
+            Ready. Upload an audio file or start monitoring.
+        </div>
+
+        <div id="results" aria-live="polite">
+            <p class="small">Your analysis results will appear here.</p>
+        </div>
+    </section>
 </main>
 
+<footer>
+    VoiceGuard — AI Voice Detection System
+</footer>
+
 <script>
+    "use strict";
+
+    // This must match VoiceAnalysisController.java.
     const API_URL = "/api/voice-analysis/upload";
 
-    const TARGET_RATE = 16000;
-    const CHUNK_SECONDS = 3;
-    const TARGET_SAMPLES = TARGET_RATE * CHUNK_SECONDS;
-
+    const uploadForm = document.getElementById("uploadForm");
+    const audioFileInput = document.getElementById("audioFile");
+    const uploadButton = document.getElementById("uploadButton");
     const startButton = document.getElementById("startButton");
     const stopButton = document.getElementById("stopButton");
-    const liveIndicator = document.getElementById("liveIndicator");
     const statusBox = document.getElementById("status");
-    const chunkCount = document.getElementById("chunkCount");
-    const durationDisplay = document.getElementById("duration");
-
-    const resultBox = document.getElementById("result");
-    const detectionDisplay = document.getElementById("detection");
-    const confidenceDisplay = document.getElementById("confidence");
-    const riskDisplay = document.getElementById("risk");
-    const fileNameDisplay = document.getElementById("fileName");
-    const warningDisplay = document.getElementById("warning");
-    const analysisTimeDisplay = document.getElementById("analysisTime");
+    const resultsBox = document.getElementById("results");
 
     let audioContext = null;
-    let microphoneStream = null;
+    let mediaStream = null;
     let sourceNode = null;
     let processorNode = null;
-    let muteNode = null;
-
     let isMonitoring = false;
-    let isAnalyzing = false;
-    let audioChunks = [];
-    let collectedSamples = 0;
-    let analyzedChunks = 0;
-    let startTime = 0;
-    let durationTimer = null;
+    let pendingSamples = [];
+    let pendingSampleCount = 0;
+    let chunkQueue = Promise.resolve();
+    let chunkNumber = 0;
+
+    const CHUNK_SECONDS = 3;
+    const TARGET_SAMPLE_RATE = 16000;
 
     function setStatus(message) {
         statusBox.textContent = message;
     }
 
-    function formatDuration(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
+    function showResult(data, title) {
+        const card = document.createElement("div");
+        card.className = "result";
 
-        return String(minutes).padStart(2, "0") + ":" +
-            String(remainingSeconds).padStart(2, "0");
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+        card.appendChild(heading);
+
+        if (data && typeof data === "object") {
+            const fields = [
+                ["result", "Prediction"],
+                ["confidence", "Confidence"],
+                ["riskLevel", "Risk Level"],
+                ["fileName", "File"],
+                ["id", "Analysis ID"]
+            ];
+
+            let found = false;
+
+            for (const [key, label] of fields) {
+                if (data[key] !== undefined && data[key] !== null) {
+                    const p = document.createElement("p");
+                    const strong = document.createElement("span");
+                    strong.className = "label";
+                    strong.textContent = label + ": ";
+                    p.appendChild(strong);
+
+                    let value = data[key];
+
+                    if (key === "confidence" &&
+                        typeof value === "number" &&
+                        value >= 0 && value <= 1) {
+                        value = (value * 100).toFixed(2) + "%";
+                    }
+
+                    p.appendChild(document.createTextNode(String(value)));
+                    card.appendChild(p);
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(data, null, 2);
+                card.appendChild(pre);
+            }
+        } else {
+            const p = document.createElement("p");
+            p.textContent = String(data);
+            card.appendChild(p);
+        }
+
+        resultsBox.prepend(card);
     }
 
-    function updateDuration() {
-        if (!isMonitoring) {
+    async function uploadAudio(blob, filename) {
+        const formData = new FormData();
+
+        // The Java controller expects @RequestParam("file").
+        formData.append("file", blob, filename);
+
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: formData
+        });
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            throw new Error(
+                "Backend returned HTTP " + response.status +
+                (responseText ? ": " + responseText.slice(0, 500) : "")
+            );
+        }
+
+        if (!responseText) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(responseText);
+        } catch {
+            return { message: responseText };
+        }
+    }
+
+    uploadForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const file = audioFileInput.files[0];
+
+        if (!file) {
+            setStatus("Please choose an audio file first.");
             return;
         }
 
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        durationDisplay.textContent = formatDuration(elapsed);
-    }
+        uploadButton.disabled = true;
+        setStatus("Uploading audio and running AI analysis...");
 
-    function downsampleBuffer(buffer, inputRate, outputRate) {
-        if (inputRate === outputRate) {
-            return new Float32Array(buffer);
+        try {
+            const result = await uploadAudio(file, file.name);
+            showResult(result, "Audio File Analysis");
+            setStatus("Audio analysis completed successfully.");
+        } catch (error) {
+            console.error("Audio upload failed:", error);
+            setStatus("Analysis failed: " + error.message);
+        } finally {
+            uploadButton.disabled = false;
         }
+    });
 
-        const ratio = inputRate / outputRate;
-        const outputLength = Math.floor(buffer.length / ratio);
-        const output = new Float32Array(outputLength);
-
-        for (let i = 0; i < outputLength; i++) {
-            const start = Math.floor(i * ratio);
-            const end = Math.min(
-                Math.floor((i + 1) * ratio),
-                buffer.length
-            );
-
-            let sum = 0;
-            let count = 0;
-
-            for (let j = start; j < end; j++) {
-                sum += buffer[j];
-                count++;
-            }
-
-            output[i] = count > 0 ? sum / count : 0;
-        }
-
-        return output;
-    }
-
+    // Convert microphone Float32 samples into mono 16-bit PCM WAV.
     function encodeWav(samples, sampleRate) {
-        const bytesPerSample = 2;
-        const dataLength = samples.length * bytesPerSample;
-
-        const buffer = new ArrayBuffer(44 + dataLength);
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
         const view = new DataView(buffer);
 
         function writeString(offset, text) {
@@ -396,24 +356,23 @@
         }
 
         writeString(0, "RIFF");
-        view.setUint32(4, 36 + dataLength, true);
+        view.setUint32(4, 36 + samples.length * 2, true);
         writeString(8, "WAVE");
         writeString(12, "fmt ");
         view.setUint32(16, 16, true);
         view.setUint16(20, 1, true);
         view.setUint16(22, 1, true);
         view.setUint32(24, sampleRate, true);
-        view.setUint32(28, sampleRate * bytesPerSample, true);
-        view.setUint16(32, bytesPerSample, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
         view.setUint16(34, 16, true);
         writeString(36, "data");
-        view.setUint32(40, dataLength, true);
+        view.setUint32(40, samples.length * 2, true);
 
         let offset = 44;
 
         for (let i = 0; i < samples.length; i++) {
-            let sample = Math.max(-1, Math.min(1, samples[i]));
-
+            const sample = Math.max(-1, Math.min(1, samples[i]));
             const value = sample < 0
                 ? sample * 32768
                 : sample * 32767;
@@ -425,188 +384,59 @@
         return new Blob([buffer], { type: "audio/wav" });
     }
 
-    function showResult(data, sourceName) {
-        resultBox.style.display = "block";
-
-        const result = String(data.result || "UNCERTAIN");
-        const confidence = Number(data.confidence);
-        const risk = String(data.riskLevel || "UNKNOWN");
-
-        detectionDisplay.textContent = result.replaceAll("_", " ");
-        confidenceDisplay.textContent =
-            Number.isFinite(confidence)
-                ? (confidence * 100).toFixed(2) + "%"
-                : "Unavailable";
-
-        riskDisplay.textContent = risk;
-        fileNameDisplay.textContent = sourceName || data.fileName || "Live microphone";
-        analysisTimeDisplay.textContent =
-            "Analyzed at: " + (data.analyzedAt || new Date().toLocaleString());
-
-        detectionDisplay.className = "result-value";
-        warningDisplay.replaceChildren();
-
-        if (result.includes("SYNTHETIC")) {
-            detectionDisplay.classList.add("synthetic");
-        } else if (result.includes("GENUINE")) {
-            detectionDisplay.classList.add("genuine");
-        } else {
-            detectionDisplay.classList.add("uncertain");
+    // Resample microphone audio to 16 kHz.
+    function resampleAudio(samples, inputRate, outputRate) {
+        if (inputRate === outputRate) {
+            return samples;
         }
 
-        riskDisplay.className = "result-value";
-
-        if (risk === "HIGH") {
-            riskDisplay.classList.add("synthetic");
-
-            const warning = document.createElement("div");
-            warning.className = "warning";
-            warning.textContent =
-                "⚠️ High synthetic-voice risk detected. Verify the speaker " +
-                "using another trusted method before taking action.";
-
-            warningDisplay.appendChild(warning);
-        } else if (risk === "MEDIUM") {
-            riskDisplay.classList.add("uncertain");
-
-            const warning = document.createElement("div");
-            warning.className = "warning";
-            warning.textContent =
-                "⚠️ Possible synthetic-voice indicators detected. " +
-                "Treat this result cautiously.";
-
-            warningDisplay.appendChild(warning);
-        } else {
-            riskDisplay.classList.add("genuine");
-        }
-    }
-
-    async function analyzeWav(wavBlob, chunkNumber) {
-        const formData = new FormData();
-
-        formData.append(
-            "file",
-            wavBlob,
-            "live_voice_chunk_" + chunkNumber + ".wav"
+        const outputLength = Math.round(
+            samples.length * outputRate / inputRate
         );
 
-        const response = await fetch(API_URL, {
-            method: "POST",
-            body: formData
-        });
+        const output = new Float32Array(outputLength);
+        const ratio = inputRate / outputRate;
 
-        if (!response.ok) {
-            const details = await response.text();
-            throw new Error(
-                "Backend returned HTTP " + response.status +
-                (details ? ": " + details : "")
-            );
+        for (let i = 0; i < outputLength; i++) {
+            const position = i * ratio;
+            const left = Math.floor(position);
+            const right = Math.min(left + 1, samples.length - 1);
+            const fraction = position - left;
+
+            output[i] =
+                samples[left] * (1 - fraction) +
+                samples[right] * fraction;
         }
 
-        return await response.json();
+        return output;
     }
 
-    async function processChunk(samples) {
-        if (isAnalyzing) {
-            return;
-        }
+    function queueChunk(samples) {
+        const wavBlob = encodeWav(samples, TARGET_SAMPLE_RATE);
+        const filename = "live-chunk-" + (++chunkNumber) + ".wav";
+        const currentChunk = chunkNumber;
 
-        isAnalyzing = true;
-        setStatus("Analyzing voice chunk " + (analyzedChunks + 1) + "...");
+        // Process chunks in order instead of sending overlapping requests.
+        chunkQueue = chunkQueue
+            .then(async function() {
+                setStatus("Analyzing live audio chunk " + currentChunk + "...");
 
-        try {
-            const wavBlob = encodeWav(samples, TARGET_RATE);
-            const nextChunkNumber = analyzedChunks + 1;
+                const result = await uploadAudio(wavBlob, filename);
+                showResult(result, "Live Chunk " + currentChunk);
 
-            const data = await analyzeWav(wavBlob, nextChunkNumber);
-
-            analyzedChunks++;
-            chunkCount.textContent = String(analyzedChunks);
-
-            showResult(
-                data,
-                "Live microphone — chunk " + analyzedChunks
-            );
-
-            if (isMonitoring) {
                 setStatus(
-                    "Monitoring active. Last audio chunk analyzed. " +
-                    "Listening for the next chunk..."
+                    isMonitoring
+                        ? "Monitoring microphone. Last chunk analyzed."
+                        : "Monitoring stopped. Queued analysis completed."
                 );
-            } else {
-                setStatus("Monitoring stopped. Final audio chunk analyzed.");
-            }
-        } catch (error) {
-            console.error(error);
-
-            setStatus(
-                "Analysis failed: " + error.message +
-                ". Check that the Java backend is running."
-            );
-        } finally {
-            isAnalyzing = false;
-
-            if (isMonitoring && collectedSamples >= TARGET_SAMPLES) {
-                // The audio callback will collect the next chunk.
-            }
-        }
+            })
+            .catch(function(error) {
+                console.error("Live audio analysis failed:", error);
+                setStatus("Live analysis failed: " + error.message);
+            });
     }
 
-    function collectAudio(event) {
-        if (!isMonitoring) {
-            return;
-        }
-
-        const input = event.inputBuffer.getChannelData(0);
-        const downsampled = downsampleBuffer(
-            input,
-            audioContext.sampleRate,
-            TARGET_RATE
-        );
-
-        let offset = 0;
-
-        while (offset < downsampled.length && isMonitoring) {
-            const needed = TARGET_SAMPLES - collectedSamples;
-            const available = downsampled.length - offset;
-            const take = Math.min(needed, available);
-
-            if (take <= 0) {
-                break;
-            }
-
-            audioChunks.push(downsampled.slice(offset, offset + take));
-            collectedSamples += take;
-            offset += take;
-
-            if (collectedSamples === TARGET_SAMPLES) {
-                const completedSamples = new Float32Array(TARGET_SAMPLES);
-
-                let destination = 0;
-
-                for (const part of audioChunks) {
-                    completedSamples.set(part, destination);
-                    destination += part.length;
-                }
-
-                audioChunks = [];
-                collectedSamples = 0;
-
-                // Continue listening while the backend analyzes the
-                // completed chunk. Queueing is handled below.
-                if (!isAnalyzing) {
-                    processChunk(completedSamples);
-                } else {
-                    setStatus(
-                        "Audio analysis is still running. Waiting to process " +
-                        "the next chunk..."
-                    );
-                }
-            }
-        }
-    }
-
-    async function startMonitoring() {
+    startButton.addEventListener("click", async function() {
         if (isMonitoring) {
             return;
         }
@@ -615,85 +445,118 @@
             if (!navigator.mediaDevices ||
                 !navigator.mediaDevices.getUserMedia) {
                 throw new Error(
-                    "Microphone access is unavailable. Open VoiceGuard " +
-                    "through http://localhost:8080 in a supported browser."
+                    "Microphone access is unavailable. Open the app through localhost."
                 );
             }
 
-            startButton.disabled = true;
             setStatus("Requesting microphone permission...");
 
-            microphoneStream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        channelCount: 1,
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
-                    }
-                });
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: false
+                }
+            });
 
             audioContext = new AudioContext();
 
-            await audioContext.resume();
+            if (audioContext.state === "suspended") {
+                await audioContext.resume();
+            }
 
-            sourceNode = audioContext.createMediaStreamSource(microphoneStream);
+            sourceNode = audioContext.createMediaStreamSource(mediaStream);
 
-            // ScriptProcessorNode is used here for a simple prototype.
-            processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+            // ScriptProcessorNode is deprecated but widely supported.
+            // A larger rewrite to AudioWorklet is not required for this demo.
+            const bufferSize = 4096;
+            processorNode = audioContext.createScriptProcessor(
+                bufferSize, 1, 1
+            );
 
-            // Keep the processing graph connected without playing microphone
-            // audio through the speakers.
-            muteNode = audioContext.createGain();
-            muteNode.gain.value = 0;
-
-            sourceNode.connect(processorNode);
-            processorNode.connect(muteNode);
-            muteNode.connect(audioContext.destination);
-
-            processorNode.onaudioprocess = collectAudio;
-
-            audioChunks = [];
-            collectedSamples = 0;
-            analyzedChunks = 0;
-            chunkCount.textContent = "0";
-            durationDisplay.textContent = "00:00";
-            startTime = Date.now();
+            pendingSamples = [];
+            pendingSampleCount = 0;
+            chunkNumber = 0;
             isMonitoring = true;
 
-            liveIndicator.textContent = "● Monitoring active";
-            liveIndicator.classList.add("active");
+            processorNode.onaudioprocess = function(event) {
+                if (!isMonitoring) {
+                    return;
+                }
 
+                const input = event.inputBuffer.getChannelData(0);
+                const copy = new Float32Array(input);
+
+                pendingSamples.push(copy);
+                pendingSampleCount += copy.length;
+
+                const requiredSamples =
+                    Math.round(audioContext.sampleRate * CHUNK_SECONDS);
+
+                while (pendingSampleCount >= requiredSamples) {
+                    const chunk = new Float32Array(requiredSamples);
+                    let written = 0;
+
+                    while (written < requiredSamples &&
+                    pendingSamples.length > 0) {
+                        const first = pendingSamples[0];
+                        const needed = requiredSamples - written;
+                        const take = Math.min(needed, first.length);
+
+                        chunk.set(first.subarray(0, take), written);
+                        written += take;
+
+                        if (take === first.length) {
+                            pendingSamples.shift();
+                        } else {
+                            pendingSamples[0] = first.subarray(take);
+                        }
+
+                        pendingSampleCount -= take;
+                    }
+
+                    if (written === requiredSamples) {
+                        const resampled = resampleAudio(
+                            chunk,
+                            audioContext.sampleRate,
+                            TARGET_SAMPLE_RATE
+                        );
+
+                        queueChunk(resampled);
+                    }
+                }
+            };
+
+            sourceNode.connect(processorNode);
+            processorNode.connect(audioContext.destination);
+
+            startButton.disabled = true;
             stopButton.disabled = false;
-            setStatus(
-                "Microphone is active. Speak normally; the first 3-second " +
-                "audio chunk is being collected."
-            );
 
-            durationTimer = setInterval(updateDuration, 1000);
-
+            setStatus("Microphone active. Collecting 3-second audio chunks...");
         } catch (error) {
-            console.error(error);
-            await stopMonitoring();
+            console.error("Could not start monitoring:", error);
+            setStatus("Could not start monitoring: " + error.message);
 
-            setStatus(
-                "Could not start microphone: " + error.message +
-                " Check browser microphone permission and try again."
-            );
-        } finally {
-            if (!isMonitoring) {
-                startButton.disabled = false;
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
             }
-        }
-    }
 
-    async function stopMonitoring() {
+            if (audioContext) {
+                await audioContext.close().catch(() => {});
+                audioContext = null;
+            }
+
+            isMonitoring = false;
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+    });
+
+    stopButton.addEventListener("click", async function() {
         isMonitoring = false;
-
-        if (durationTimer) {
-            clearInterval(durationTimer);
-            durationTimer = null;
-        }
 
         if (processorNode) {
             processorNode.onaudioprocess = null;
@@ -706,86 +569,28 @@
             sourceNode = null;
         }
 
-        if (muteNode) {
-            muteNode.disconnect();
-            muteNode = null;
-        }
-
-        if (microphoneStream) {
-            microphoneStream.getTracks().forEach(track => track.stop());
-            microphoneStream = null;
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
         }
 
         if (audioContext) {
-            try {
-                await audioContext.close();
-            } catch (error) {
-                console.warn(error);
-            }
-
+            await audioContext.close().catch(() => {});
             audioContext = null;
         }
 
-        audioChunks = [];
-        collectedSamples = 0;
-
-        liveIndicator.textContent = "● Monitoring stopped";
-        liveIndicator.classList.remove("active");
+        pendingSamples = [];
+        pendingSampleCount = 0;
 
         startButton.disabled = false;
         stopButton.disabled = true;
 
-        if (!isAnalyzing) {
-            setStatus("Monitoring stopped. The microphone has been released.");
-        }
-    }
+        setStatus("Monitoring stopped. Waiting for queued analyses to finish...");
 
-    startButton.addEventListener("click", startMonitoring);
-    stopButton.addEventListener("click", stopMonitoring);
+        await chunkQueue;
 
-    document.getElementById("uploadForm").addEventListener(
-        "submit",
-        async function(event) {
-            event.preventDefault();
-
-            const fileInput = document.getElementById("audioFile");
-            const uploadButton = document.getElementById("uploadButton");
-
-            if (!fileInput.files.length) {
-                setStatus("Please select an audio file first.");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append("file", fileInput.files[0]);
-
-            uploadButton.disabled = true;
-            setStatus("Uploading and analyzing selected audio...");
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error("Backend returned HTTP " + response.status);
-                }
-
-                const data = await response.json();
-
-                showResult(data, fileInput.files[0].name);
-                setStatus("File analysis completed.");
-            } catch (error) {
-                console.error(error);
-                setStatus("File analysis failed: " + error.message);
-            } finally {
-                uploadButton.disabled = false;
-            }
-        }
-    );
+        setStatus("Monitoring stopped.");
+    });
 </script>
-
 </body>
 </html>
-```

@@ -1,10 +1,7 @@
 package com.example.voiceguard.service;
-
 import ai.onnxruntime.*;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -335,157 +332,114 @@ public class VoiceDetectionService {
                         "Unexpected ONNX output format."
                 );
             }
-
             float[][] output =
                     (float[][]) outputValue;
-
             float[] logits =
                     output[0];
-
             // --------------------------------------------------
             // 10. Softmax
             // --------------------------------------------------
-
             double maxLogit =
                     Math.max(
                             logits[0],
                             logits[1]
                     );
-
             double exp0 =
                     Math.exp(
                             logits[0] - maxLogit
                     );
-
             double exp1 =
                     Math.exp(
                             logits[1] - maxLogit
                     );
-
             double sum =
                     exp0 + exp1;
-
             double genuineProbability =
                     exp0 / sum;
-
             double syntheticProbability =
                     exp1 / sum;
-
             // --------------------------------------------------
             // 11. Determine result
             // --------------------------------------------------
-
             String analysisResult;
             double confidence;
             String riskLevel;
-
             if (syntheticProbability >= 0.80) {
-
                 analysisResult =
                         "SUSPECTED_SYNTHETIC";
-
                 confidence =
                         syntheticProbability;
-
                 riskLevel =
                         "HIGH";
-
             } else if (syntheticProbability >= 0.50) {
-
                 analysisResult =
                         "SUSPECTED_SYNTHETIC";
-
                 confidence =
                         syntheticProbability;
-
                 riskLevel =
                         "MEDIUM";
-
             } else {
-
                 analysisResult =
                         "SUSPECTED_GENUINE";
-
                 confidence =
                         genuineProbability;
-
                 riskLevel =
                         "LOW";
             }
-
             // --------------------------------------------------
             // 12. Cleanup inference objects
             // --------------------------------------------------
-
             inputTensor.close();
             result.close();
-
             // --------------------------------------------------
             // 13. Return AI result
             // --------------------------------------------------
-
             return new DetectionResult(
                     analysisResult,
                     confidence,
                     riskLevel
             );
-
         } catch (Exception e) {
-
             throw new RuntimeException(
                     "Voice analysis failed: "
                             + e.getMessage(),
                     e
             );
-
         } finally {
-
             if (temporaryAudioFile != null) {
-
                 try {
-
                     Files.deleteIfExists(
                             temporaryAudioFile
                     );
-
                 } catch (Exception ignored) {
                 }
             }
         }
     }
-
     // --------------------------------------------------
     // Cleanup when Spring Boot shuts down
     // --------------------------------------------------
-
     @PreDestroy
     public void cleanup() {
-
         try {
 
             if (session != null) {
                 session.close();
             }
-
         } catch (Exception ignored) {
         }
-
         try {
-
             if (temporaryModelFile != null) {
                 Files.deleteIfExists(
                         temporaryModelFile
                 );
             }
-
         } catch (Exception ignored) {
         }
     }
-
     // --------------------------------------------------
     // AI result object
     // --------------------------------------------------
-
     public record DetectionResult(
             String result,
             double confidence,
