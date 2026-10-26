@@ -1,11 +1,17 @@
+
 package com.example.voiceguard.service;
-import ai.onnxruntime.*;
+
+import ai.onnxruntime.OnnxTensor;
+import ai.onnxruntime.OrtEnvironment;
+import ai.onnxruntime.OrtSession;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.sound.sampled.*;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -23,423 +29,278 @@ public class VoiceDetectionService {
     private OrtSession session;
     private Path temporaryModelFile;
 
-    // --------------------------------------------------
-    // AI model initialization
-    // --------------------------------------------------
-
     @PostConstruct
     public void initializeModel() {
-
         try {
+            environment = OrtEnvironment.getEnvironment();
 
-            System.out.println();
-            System.out.println("======================================");
-            System.out.println("Loading VoiceGuard AI Model...");
-            System.out.println("======================================");
-
-            environment =
-                    OrtEnvironment.getEnvironment();
-
-            InputStream modelStream =
-                    VoiceDetectionService.class
-                            .getClassLoader()
-                            .getResourceAsStream(
-                                    "models/best_model.onnx"
-                            );
+            InputStream modelStream = getClass()
+                    .getClassLoader()
+                    .getResourceAsStream("models/best_model.onnx");
 
             if (modelStream == null) {
-                throw new RuntimeException(
+                throw new IllegalStateException(
                         "best_model.onnx was not found in resources/models"
                 );
             }
 
-            temporaryModelFile =
-                    Files.createTempFile(
-                            "voiceguard-model-",
-                            ".onnx"
-                    );
+            try (modelStream) {
+                temporaryModelFile = Files.createTempFile(
+                        "voiceguard-model-", ".onnx"
+                );
 
-            Files.copy(
-                    modelStream,
-                    temporaryModelFile,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
-            modelStream.close();
+                Files.copy(
+                        modelStream,
+                        temporaryModelFile,
+                        StandardCopyOption.REPLACE_EXISTING
+                );
+            }
 
             OrtSession.SessionOptions options =
                     new OrtSession.SessionOptions();
 
-            session =
-                    environment.createSession(
-                            temporaryModelFile.toString(),
-                            options
-                    );
+            try {
+                session = environment.createSession(
+                        temporaryModelFile.toString(),
+                        options
+                );
+            } finally {
+                options.close();
+            }
 
-            options.close();
-
-            System.out.println(
-                    "VoiceGuard AI model loaded successfully!"
-            );
-
-            System.out.println(
-                    "Input: input"
-            );
-
-            System.out.println(
-                    "Output: output"
-            );
-
-            System.out.println(
-                    "======================================"
-            );
+            System.out.println("VoiceGuard AI model loaded successfully.");
+            System.out.println("Model input: input");
+            System.out.println("Model output: output");
 
         } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Failed to load VoiceGuard AI model.",
-                    e
+            throw new IllegalStateException(
+                    "Failed to load VoiceGuard AI model.", e
             );
         }
     }
 
-    // --------------------------------------------------
-    // Main voice analysis method
-    // --------------------------------------------------
-
     public DetectionResult analyze(MultipartFile file) {
-
         Path temporaryAudioFile = null;
 
         try {
-
             if (file == null || file.isEmpty()) {
-                throw new IllegalArgumentException(
-                        "Audio file is empty."
-                );
+                throw new IllegalArgumentException("Audio file is empty.");
             }
 
-            // --------------------------------------------------
-            // 1. Save uploaded audio temporarily
-            // --------------------------------------------------
-
-            String originalName =
-                    file.getOriginalFilename();
-
+            String originalName = file.getOriginalFilename();
             String suffix = ".audio";
 
-            if (originalName != null &&
-                    originalName.contains(".")) {
+            if (originalName != null && originalName.contains(".")) {
+                suffix = originalName.substring(
+                        originalName.lastIndexOf(".")
+                );
 
-                suffix =
-                        originalName.substring(
-                                originalName.lastIndexOf(".")
-                        );
+                // Avoid excessively long temporary-file suffixes.
+                if (suffix.length() > 20) {
+                    suffix = ".audio";
+                }
             }
 
-            temporaryAudioFile =
-                    Files.createTempFile(
-                            "voiceguard-audio-",
-                            suffix
-                    );
-
-            file.transferTo(
-                    temporaryAudioFile.toFile()
+            temporaryAudioFile = Files.createTempFile(
+                    "voiceguard-audio-", suffix
             );
 
-            // --------------------------------------------------
-            // 2. Decode audio
-            // --------------------------------------------------
+            file.transferTo(temporaryAudioFile.toFile());
 
-            AudioInputStream originalStream =
-                    AudioSystem.getAudioInputStream(
-                            temporaryAudioFile.toFile()
-                    );
+            float[] samples;
 
-            AudioFormat targetFormat =
-                    new AudioFormat(
-                            AudioFormat.Encoding.PCM_SIGNED,
-                            TARGET_SAMPLE_RATE,
-                            16,
-                            1,
-                            2,
-                            TARGET_SAMPLE_RATE,
-                            false
-                    );
+            try (AudioInputStream originalStream =
+                         AudioSystem.getAudioInputStream(
+                                 temporaryAudioFile.toFile())) {
 
-            AudioInputStream pcmStream =
-                    AudioSystem.getAudioInputStream(
-                            targetFormat,
-                            originalStream
-                    );
-
-            // --------------------------------------------------
-            // 3. Read PCM audio
-            // --------------------------------------------------
-
-            ByteArrayOutputStream audioBuffer =
-                    new ByteArrayOutputStream();
-
-            byte[] buffer =
-                    new byte[4096];
-
-            int bytesRead;
-
-            while ((bytesRead =
-                    pcmStream.read(buffer)) != -1) {
-
-                audioBuffer.write(
-                        buffer,
-                        0,
-                        bytesRead
+                AudioFormat targetFormat = new AudioFormat(
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        TARGET_SAMPLE_RATE,
+                        16,
+                        1,
+                        2,
+                        TARGET_SAMPLE_RATE,
+                        false
                 );
+
+                try (AudioInputStream pcmStream =
+                             AudioSystem.getAudioInputStream(
+                                     targetFormat, originalStream)) {
+
+                    ByteArrayOutputStream audioBuffer =
+                            new ByteArrayOutputStream();
+
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+
+                    while ((bytesRead = pcmStream.read(buffer)) != -1) {
+                        audioBuffer.write(buffer, 0, bytesRead);
+                    }
+
+                    byte[] pcmBytes = audioBuffer.toByteArray();
+                    int totalSamples = pcmBytes.length / 2;
+
+                    if (totalSamples == 0) {
+                        throw new IllegalArgumentException(
+                                "The uploaded audio contains no samples."
+                        );
+                    }
+
+                    samples = new float[totalSamples];
+
+                    for (int i = 0; i < totalSamples; i++) {
+                        int low = pcmBytes[i * 2] & 0xff;
+                        int high = pcmBytes[i * 2 + 1];
+
+                        short sample = (short) ((high << 8) | low);
+                        samples[i] = sample / 32768.0f;
+                    }
+                }
             }
 
-            byte[] pcmBytes =
-                    audioBuffer.toByteArray();
+            // Use the first 3 seconds, padding shorter clips with zeros.
+            float[] modelInput = new float[TARGET_SAMPLES];
 
-            originalStream.close();
-            pcmStream.close();
-
-            // --------------------------------------------------
-            // 4. Convert PCM bytes to float samples
-            // --------------------------------------------------
-
-            int totalSamples =
-                    pcmBytes.length / 2;
-
-            float[] samples =
-                    new float[totalSamples];
-
-            for (int i = 0; i < totalSamples; i++) {
-
-                int low =
-                        pcmBytes[i * 2] & 0xff;
-
-                int high =
-                        pcmBytes[i * 2 + 1];
-
-                short sample =
-                        (short) ((high << 8) | low);
-
-                samples[i] =
-                        sample / 32768.0f;
-            }
-
-            // --------------------------------------------------
-            // 5. Create exactly 48,000 samples
-            // --------------------------------------------------
-
-            float[] modelInput =
-                    new float[TARGET_SAMPLES];
-
-            int samplesToCopy =
-                    Math.min(
-                            samples.length,
-                            TARGET_SAMPLES
-                    );
+            int samplesToCopy = Math.min(
+                    samples.length, TARGET_SAMPLES
+            );
 
             System.arraycopy(
-                    samples,
-                    0,
-                    modelInput,
-                    0,
-                    samplesToCopy
+                    samples, 0, modelInput, 0, samplesToCopy
             );
 
-            // --------------------------------------------------
-            // 6. Normalize audio
-            // --------------------------------------------------
-
+            // Normalize using the same approach as the original service.
             double mean = 0.0;
 
             for (float sample : modelInput) {
                 mean += sample;
             }
 
-            mean /=
-                    modelInput.length;
+            mean /= modelInput.length;
 
             double variance = 0.0;
 
             for (float sample : modelInput) {
-
-                double difference =
-                        sample - mean;
-
-                variance +=
-                        difference * difference;
+                double difference = sample - mean;
+                variance += difference * difference;
             }
 
-            variance /=
-                    modelInput.length;
+            variance /= modelInput.length;
 
-            double standardDeviation =
-                    Math.sqrt(
-                            variance + 1e-5
-                    );
+            double standardDeviation = Math.sqrt(variance + 1e-5);
 
-            for (int i = 0;
-                 i < modelInput.length;
-                 i++) {
-
-                modelInput[i] =
-                        (float)
-                                ((modelInput[i] - mean)
-                                        / standardDeviation);
-            }
-
-            // --------------------------------------------------
-            // 7. Create ONNX tensor
-            // --------------------------------------------------
-
-            float[][] inputData =
-                    new float[][]{
-                            modelInput
-                    };
-
-            OnnxTensor inputTensor =
-                    OnnxTensor.createTensor(
-                            environment,
-                            inputData
-                    );
-
-            // --------------------------------------------------
-            // 8. Run AI inference
-            // --------------------------------------------------
-
-            OrtSession.Result result =
-                    session.run(
-                            Collections.singletonMap(
-                                    "input",
-                                    inputTensor
-                            )
-                    );
-
-            // --------------------------------------------------
-            // 9. Read model output
-            // --------------------------------------------------
-
-            Object outputValue =
-                    result.get(0).getValue();
-
-            if (!(outputValue instanceof float[][])) {
-
-                inputTensor.close();
-                result.close();
-
-                throw new RuntimeException(
-                        "Unexpected ONNX output format."
+            for (int i = 0; i < modelInput.length; i++) {
+                modelInput[i] = (float) (
+                        (modelInput[i] - mean) / standardDeviation
                 );
             }
-            float[][] output =
-                    (float[][]) outputValue;
-            float[] logits =
-                    output[0];
-            // --------------------------------------------------
-            // 10. Softmax
-            // --------------------------------------------------
-            double maxLogit =
-                    Math.max(
-                            logits[0],
-                            logits[1]
+
+            float[][] inputData = new float[][]{modelInput};
+
+            try (OnnxTensor inputTensor = OnnxTensor.createTensor(
+                    environment, inputData)) {
+
+                try (OrtSession.Result result = session.run(
+                        Collections.singletonMap("input", inputTensor))) {
+
+                    Object outputValue = result.get(0).getValue();
+
+                    if (!(outputValue instanceof float[][] output)
+                            || output.length == 0
+                            || output[0].length < 2) {
+                        throw new IllegalStateException(
+                                "Unexpected ONNX output format. "
+                                        + "Expected at least two output values."
+                        );
+                    }
+
+                    float[] logits = output[0];
+
+                    // Assumes index 0 = genuine and index 1 = synthetic.
+                    // Confirm this ordering against your model's training code.
+                    double maxLogit = Math.max(logits[0], logits[1]);
+
+                    double exp0 = Math.exp(logits[0] - maxLogit);
+                    double exp1 = Math.exp(logits[1] - maxLogit);
+                    double sum = exp0 + exp1;
+
+                    if (!Double.isFinite(sum) || sum == 0.0) {
+                        throw new IllegalStateException(
+                                "Model returned invalid prediction values."
+                        );
+                    }
+
+                    double genuineProbability = exp0 / sum;
+                    double syntheticProbability = exp1 / sum;
+
+                    String analysisResult;
+                    double confidence;
+                    String riskLevel;
+
+                    if (syntheticProbability >= 0.80) {
+                        analysisResult = "SUSPECTED_SYNTHETIC";
+                        confidence = syntheticProbability;
+                        riskLevel = "HIGH";
+                    } else if (syntheticProbability >= 0.50) {
+                        analysisResult = "SUSPECTED_SYNTHETIC";
+                        confidence = syntheticProbability;
+                        riskLevel = "MEDIUM";
+                    } else {
+                        analysisResult = "SUSPECTED_GENUINE";
+                        confidence = genuineProbability;
+                        riskLevel = "LOW";
+                    }
+
+                    return new DetectionResult(
+                            analysisResult,
+                            confidence,
+                            riskLevel
                     );
-            double exp0 =
-                    Math.exp(
-                            logits[0] - maxLogit
-                    );
-            double exp1 =
-                    Math.exp(
-                            logits[1] - maxLogit
-                    );
-            double sum =
-                    exp0 + exp1;
-            double genuineProbability =
-                    exp0 / sum;
-            double syntheticProbability =
-                    exp1 / sum;
-            // --------------------------------------------------
-            // 11. Determine result
-            // --------------------------------------------------
-            String analysisResult;
-            double confidence;
-            String riskLevel;
-            if (syntheticProbability >= 0.80) {
-                analysisResult =
-                        "SUSPECTED_SYNTHETIC";
-                confidence =
-                        syntheticProbability;
-                riskLevel =
-                        "HIGH";
-            } else if (syntheticProbability >= 0.50) {
-                analysisResult =
-                        "SUSPECTED_SYNTHETIC";
-                confidence =
-                        syntheticProbability;
-                riskLevel =
-                        "MEDIUM";
-            } else {
-                analysisResult =
-                        "SUSPECTED_GENUINE";
-                confidence =
-                        genuineProbability;
-                riskLevel =
-                        "LOW";
+                }
             }
-            // --------------------------------------------------
-            // 12. Cleanup inference objects
-            // --------------------------------------------------
-            inputTensor.close();
-            result.close();
-            // --------------------------------------------------
-            // 13. Return AI result
-            // --------------------------------------------------
-            return new DetectionResult(
-                    analysisResult,
-                    confidence,
-                    riskLevel
-            );
+
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Voice analysis failed: "
-                            + e.getMessage(),
-                    e
+                    "Voice analysis failed: " + e.getMessage(), e
             );
         } finally {
             if (temporaryAudioFile != null) {
                 try {
-                    Files.deleteIfExists(
-                            temporaryAudioFile
+                    Files.deleteIfExists(temporaryAudioFile);
+                } catch (Exception e) {
+                    System.err.println(
+                            "Could not delete temporary audio file: "
+                                    + e.getMessage()
                     );
-                } catch (Exception ignored) {
                 }
             }
         }
     }
-    // --------------------------------------------------
-    // Cleanup when Spring Boot shuts down
-    // --------------------------------------------------
+
     @PreDestroy
     public void cleanup() {
-        try {
-
-            if (session != null) {
+        if (session != null) {
+            try {
                 session.close();
-            }
-        } catch (Exception ignored) {
-        }
-        try {
-            if (temporaryModelFile != null) {
-                Files.deleteIfExists(
-                        temporaryModelFile
+            } catch (Exception e) {
+                System.err.println(
+                        "Could not close ONNX session: " + e.getMessage()
                 );
             }
-        } catch (Exception ignored) {
+        }
+
+        if (temporaryModelFile != null) {
+            try {
+                Files.deleteIfExists(temporaryModelFile);
+            } catch (Exception e) {
+                System.err.println(
+                        "Could not delete temporary model file: "
+                                + e.getMessage()
+                );
+            }
         }
     }
-    // --------------------------------------------------
-    // AI result object
-    // --------------------------------------------------
+
     public record DetectionResult(
             String result,
             double confidence,

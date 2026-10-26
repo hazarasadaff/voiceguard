@@ -7,9 +7,7 @@
     <title>VoiceGuard | AI Voice Detection</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -24,15 +22,8 @@
             background: #111a2e;
         }
 
-        header h1 {
-            margin: 0;
-            color: #67e8f9;
-        }
-
-        header p {
-            color: #9ca3af;
-            margin-bottom: 0;
-        }
+        header h1 { margin: 0; color: #67e8f9; }
+        header p { color: #9ca3af; margin-bottom: 0; }
 
         main {
             max-width: 950px;
@@ -48,15 +39,8 @@
             margin-bottom: 22px;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #f9fafb;
-        }
-
-        p {
-            line-height: 1.6;
-            color: #bdc7d8;
-        }
+        h2 { margin-top: 0; color: #f9fafb; }
+        p { line-height: 1.6; color: #bdc7d8; }
 
         input[type="file"] {
             display: block;
@@ -78,25 +62,10 @@
             cursor: pointer;
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .primary {
-            background: #0891b2;
-            color: white;
-        }
-
-        .secondary {
-            background: #334155;
-            color: white;
-        }
-
-        .danger {
-            background: #b91c1c;
-            color: white;
-        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .primary { background: #0891b2; color: white; }
+        .secondary { background: #334155; color: white; }
+        .danger { background: #b91c1c; color: white; }
 
         #status {
             margin-top: 18px;
@@ -116,18 +85,23 @@
             overflow-wrap: anywhere;
         }
 
-        .result p {
-            margin: 8px 0;
+        .result p { margin: 8px 0; }
+        .label { color: #67e8f9; font-weight: bold; }
+        .small { color: #9ca3af; font-size: 13px; }
+
+        .meter {
+            height: 8px;
+            background: #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
         }
 
-        .label {
-            color: #67e8f9;
-            font-weight: bold;
-        }
-
-        .small {
-            color: #9ca3af;
-            font-size: 13px;
+        .meter-fill {
+            height: 100%;
+            width: 0;
+            background: #22d3ee;
+            transition: width 0.3s ease;
         }
 
         footer {
@@ -147,10 +121,7 @@
 <main>
     <section class="card">
         <h2>Analyze an Audio File</h2>
-        <p>
-            Upload an audio recording to analyze it using the VoiceGuard
-            backend and its configured AI model.
-        </p>
+        <p>Upload an audio recording to analyze it using the VoiceGuard backend and its configured AI model.</p>
 
         <form id="uploadForm">
             <input
@@ -167,27 +138,17 @@
 
     <section class="card">
         <h2>Live Microphone Monitoring</h2>
-        <p>
-            Allow microphone access. VoiceGuard will capture audio in
-            3-second chunks and submit each chunk for analysis.
-        </p>
+        <p>Allow microphone access. VoiceGuard captures audio in 3-second chunks and submits each chunk for analysis.</p>
 
-        <button id="startButton" class="primary">
-            Start Monitoring
-        </button>
+        <button id="startButton" class="primary">Start Monitoring</button>
+        <button id="stopButton" class="danger" disabled>Stop Monitoring</button>
 
-        <button id="stopButton" class="danger" disabled>
-            Stop Monitoring
-        </button>
-
-        <p class="small">
-            Live monitoring requires microphone permission and a secure
-            browser context, such as localhost.
-        </p>
+        <p class="small">Microphone access requires permission. Use localhost or HTTPS.</p>
     </section>
 
     <section class="card">
         <h2>Analysis Results</h2>
+
         <div id="status" role="status" aria-live="polite">
             Ready. Upload an audio file or start monitoring.
         </div>
@@ -198,14 +159,11 @@
     </section>
 </main>
 
-<footer>
-    VoiceGuard — AI Voice Detection System
-</footer>
+<footer>VoiceGuard — AI Voice Detection System</footer>
 
 <script>
     "use strict";
 
-    // This must match VoiceAnalysisController.java.
     const API_URL = "/api/voice-analysis/upload";
 
     const uploadForm = document.getElementById("uploadForm");
@@ -220,6 +178,7 @@
     let mediaStream = null;
     let sourceNode = null;
     let processorNode = null;
+    let silentGain = null;
     let isMonitoring = false;
     let pendingSamples = [];
     let pendingSampleCount = 0;
@@ -253,25 +212,47 @@
             let found = false;
 
             for (const [key, label] of fields) {
-                if (data[key] !== undefined && data[key] !== null) {
-                    const p = document.createElement("p");
-                    const strong = document.createElement("span");
-                    strong.className = "label";
-                    strong.textContent = label + ": ";
-                    p.appendChild(strong);
+                if (data[key] === undefined || data[key] === null) continue;
 
-                    let value = data[key];
+                const p = document.createElement("p");
+                const strong = document.createElement("span");
+                strong.className = "label";
+                strong.textContent = label + ": ";
+                p.appendChild(strong);
 
-                    if (key === "confidence" &&
-                        typeof value === "number" &&
-                        value >= 0 && value <= 1) {
+                let value = data[key];
+
+                if (key === "confidence" && typeof value === "number") {
+                    if (value >= 0 && value <= 1) {
                         value = (value * 100).toFixed(2) + "%";
+                    } else if (value > 1 && value <= 100) {
+                        value = value.toFixed(2) + "%";
                     }
-
-                    p.appendChild(document.createTextNode(String(value)));
-                    card.appendChild(p);
-                    found = true;
                 }
+
+                p.appendChild(document.createTextNode(String(value)));
+                card.appendChild(p);
+
+                if (key === "confidence") {
+                    const numericValue = Number(data[key]);
+                    if (Number.isFinite(numericValue)) {
+                        const percent = numericValue <= 1
+                            ? numericValue * 100
+                            : numericValue;
+
+                        const meter = document.createElement("div");
+                        meter.className = "meter";
+
+                        const fill = document.createElement("div");
+                        fill.className = "meter-fill";
+                        fill.style.width = Math.max(0, Math.min(100, percent)) + "%";
+
+                        meter.appendChild(fill);
+                        card.appendChild(meter);
+                    }
+                }
+
+                found = true;
             }
 
             if (!found) {
@@ -285,13 +266,12 @@
             card.appendChild(p);
         }
 
+        // Add the result card to the page.
         resultsBox.prepend(card);
     }
 
     async function uploadAudio(blob, filename) {
         const formData = new FormData();
-
-        // The Java controller expects @RequestParam("file").
         formData.append("file", blob, filename);
 
         const response = await fetch(API_URL, {
@@ -304,18 +284,16 @@
         if (!response.ok) {
             throw new Error(
                 "Backend returned HTTP " + response.status +
-                (responseText ? ": " + responseText.slice(0, 500) : "")
+                (responseText ? ": " + responseText.slice(0, 300) : "")
             );
         }
 
-        if (!responseText) {
-            return {};
-        }
+        if (!responseText) return {};
 
         try {
             return JSON.parse(responseText);
         } catch {
-            return { message: responseText };
+            throw new Error("The backend response was not valid JSON.");
         }
     }
 
@@ -344,7 +322,6 @@
         }
     });
 
-    // Convert microphone Float32 samples into mono 16-bit PCM WAV.
     function encodeWav(samples, sampleRate) {
         const buffer = new ArrayBuffer(44 + samples.length * 2);
         const view = new DataView(buffer);
@@ -373,10 +350,7 @@
 
         for (let i = 0; i < samples.length; i++) {
             const sample = Math.max(-1, Math.min(1, samples[i]));
-            const value = sample < 0
-                ? sample * 32768
-                : sample * 32767;
-
+            const value = sample < 0 ? sample * 32768 : sample * 32767;
             view.setInt16(offset, value, true);
             offset += 2;
         }
@@ -384,16 +358,10 @@
         return new Blob([buffer], { type: "audio/wav" });
     }
 
-    // Resample microphone audio to 16 kHz.
     function resampleAudio(samples, inputRate, outputRate) {
-        if (inputRate === outputRate) {
-            return samples;
-        }
+        if (inputRate === outputRate) return samples;
 
-        const outputLength = Math.round(
-            samples.length * outputRate / inputRate
-        );
-
+        const outputLength = Math.round(samples.length * outputRate / inputRate);
         const output = new Float32Array(outputLength);
         const ratio = inputRate / outputRate;
 
@@ -413,40 +381,30 @@
 
     function queueChunk(samples) {
         const wavBlob = encodeWav(samples, TARGET_SAMPLE_RATE);
-        const filename = "live-chunk-" + (++chunkNumber) + ".wav";
-        const currentChunk = chunkNumber;
+        const currentChunk = ++chunkNumber;
+        const filename = "live-chunk-" + currentChunk + ".wav";
 
-        // Process chunks in order instead of sending overlapping requests.
-        chunkQueue = chunkQueue
-            .then(async function() {
-                setStatus("Analyzing live audio chunk " + currentChunk + "...");
+        chunkQueue = chunkQueue.then(async function() {
+            setStatus("Analyzing live audio chunk " + currentChunk + "...");
 
-                const result = await uploadAudio(wavBlob, filename);
-                showResult(result, "Live Chunk " + currentChunk);
+            const result = await uploadAudio(wavBlob, filename);
+            showResult(result, "Live Chunk " + currentChunk);
 
-                setStatus(
-                    isMonitoring
-                        ? "Monitoring microphone. Last chunk analyzed."
-                        : "Monitoring stopped. Queued analysis completed."
-                );
-            })
-            .catch(function(error) {
-                console.error("Live audio analysis failed:", error);
-                setStatus("Live analysis failed: " + error.message);
-            });
+            if (isMonitoring) {
+                setStatus("Monitoring microphone. Last chunk analyzed.");
+            }
+        }).catch(function(error) {
+            console.error("Live audio analysis failed:", error);
+            setStatus("Live analysis failed: " + error.message);
+        });
     }
 
     startButton.addEventListener("click", async function() {
-        if (isMonitoring) {
-            return;
-        }
+        if (isMonitoring) return;
 
         try {
-            if (!navigator.mediaDevices ||
-                !navigator.mediaDevices.getUserMedia) {
-                throw new Error(
-                    "Microphone access is unavailable. Open the app through localhost."
-                );
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Microphone access is unavailable. Open VoiceGuard using localhost or HTTPS.");
             }
 
             setStatus("Requesting microphone permission...");
@@ -468,12 +426,12 @@
 
             sourceNode = audioContext.createMediaStreamSource(mediaStream);
 
-            // ScriptProcessorNode is deprecated but widely supported.
-            // A larger rewrite to AudioWorklet is not required for this demo.
-            const bufferSize = 4096;
-            processorNode = audioContext.createScriptProcessor(
-                bufferSize, 1, 1
-            );
+            processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+
+            // Keep the audio processing graph active without playing the mic
+            // through the speakers.
+            silentGain = audioContext.createGain();
+            silentGain.gain.value = 0;
 
             pendingSamples = [];
             pendingSampleCount = 0;
@@ -481,9 +439,7 @@
             isMonitoring = true;
 
             processorNode.onaudioprocess = function(event) {
-                if (!isMonitoring) {
-                    return;
-                }
+                if (!isMonitoring) return;
 
                 const input = event.inputBuffer.getChannelData(0);
                 const copy = new Float32Array(input);
@@ -491,15 +447,15 @@
                 pendingSamples.push(copy);
                 pendingSampleCount += copy.length;
 
-                const requiredSamples =
-                    Math.round(audioContext.sampleRate * CHUNK_SECONDS);
+                const requiredSamples = Math.round(
+                    audioContext.sampleRate * CHUNK_SECONDS
+                );
 
                 while (pendingSampleCount >= requiredSamples) {
                     const chunk = new Float32Array(requiredSamples);
                     let written = 0;
 
-                    while (written < requiredSamples &&
-                    pendingSamples.length > 0) {
+                    while (written < requiredSamples && pendingSamples.length > 0) {
                         const first = pendingSamples[0];
                         const needed = requiredSamples - written;
                         const take = Math.min(needed, first.length);
@@ -529,7 +485,8 @@
             };
 
             sourceNode.connect(processorNode);
-            processorNode.connect(audioContext.destination);
+            processorNode.connect(silentGain);
+            silentGain.connect(audioContext.destination);
 
             startButton.disabled = true;
             stopButton.disabled = false;
@@ -569,6 +526,11 @@
             sourceNode = null;
         }
 
+        if (silentGain) {
+            silentGain.disconnect();
+            silentGain = null;
+        }
+
         if (mediaStream) {
             mediaStream.getTracks().forEach(track => track.stop());
             mediaStream = null;
@@ -588,7 +550,6 @@
         setStatus("Monitoring stopped. Waiting for queued analyses to finish...");
 
         await chunkQueue;
-
         setStatus("Monitoring stopped.");
     });
 </script>
