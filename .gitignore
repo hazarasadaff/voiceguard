@@ -1,5 +1,3 @@
-# VoiceGuard AI model (download separately; do not upload the large model)
-src/main/resources/models/*.onnx
 
 # Local secrets and environment configuration
 .env
